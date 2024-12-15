@@ -48,7 +48,7 @@ def preprocess_image(image_data):
     img = Image.open(io.BytesIO(image_bytes)).convert('L')  # Convert to grayscale
     
     # Resize image to the required dimensions
-    img = img.resize((96, 96))
+    img = img.resize((66, 66))
     
     # Convert to numpy array and flatten
     img_array = np.array(img).flatten()
@@ -58,7 +58,8 @@ def preprocess_image(image_data):
 @app.route('/upload', methods=['POST'])
 def upload_image():
     try:
-        data = request.data  # Raw request data
+        data = request.get_json() # Raw request data
+
         print("Received raw data:", data)
         # data_json = request.json  # Try parsing the JSON
         # print("Decoded JSON:", request.json)

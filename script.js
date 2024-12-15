@@ -12,9 +12,9 @@ document.addEventListener("DOMContentLoaded", () => {
        console.log(imageData.src);
       image = imageData.src;
       image = image.replace("data:image/png;base64,", "");
-      data = {
+      data = JSON.stringify({
         image: image
-      }
+      });
       console.log(data);
       const response = await fetch("http://127.0.0.1:5000/upload", {
       method: "POST",
