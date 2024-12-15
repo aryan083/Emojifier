@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Emojiifier</title>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+      integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w=="
+      crossorigin="anonymous"
+    />
+    <style nonce="<%= nonce %>">
+      body {
+        background-color: rgb(255, 187, 0);
+      }
+
+      .navbar {
+        transition: transform 0.3s ease-in-out, padding 0.3s ease-in-out,
+          background-color 0.3s ease-in-out;
+        padding: 1rem 2rem;
+        background-color: #ffdc6b;
+        border: black 2px solid;
+        border-radius: 30px;
+        width: 100%;
+        margin: 0 auto;
+        transform: scale(1);
+        position: relative;
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .navbar.scrolled {
+        padding: 0.5rem 2rem;
+        border-radius: 0;
+        width: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: #fcd34d6e;
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+        border: none !important;
+      }
+
+      .navbar-brand {
+        transition: transform 1s ease-in-out;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .navbar.scrolled .navbar-brand {
+        transform: translateX(-50%) scale(0.8);
+      }
+
+      .content-area {
+        width: 100vw;
+        height: calc(90vh);
+        padding: 20px;
+      }
+
+      @keyframes emojiChange {
+        0% {
+          content: "😃";
+        }
+        25% {
+          content: "😎";
+        }
+        50% {
+          content: "🤪";
+        }
+        75% {
+          content: "🥳";
+        }
+        100% {
+          content: "😃";
+        }
+      }
+
+      .emoji-text::after {
+        content: "😃";
+        animation: emojiChange 4s infinite;
+      }
+
+      .spacer {
+        margin-top: 13.6vh;
+      }
+
+      .content-wrapper {
+        margin-top: -13.6vh;
+      }
+
+      .main-content {
+        width: 95%;
+        margin: 0 auto;
+        min-height: calc(100vh - 13.6vh);
+      }
+
+      .bg-light-gray {
+        background-color: #f0f0f0;
+        min-height: 70vh;
+        border-top-left-radius: 30px !important;
+        border-bottom-left-radius: 30px;
+      }
+
+      .bg-dark-red {
+        background-color: #324376;
+        color: white;
+        min-height: 70vh;
+        border-top-right-radius: 30px;
+        border-bottom-right-radius: 30px;
+      }
+
+      .webcam-video {
+        object-fit: cover;
+        border-top-left-radius: 30px !important;
+        border-bottom-left-radius: 30px;
+      }
+
+      .instructions-container {
+        padding: 1.5rem;
+        background-color: rgba(255, 255, 255, 0.043);
+        border-radius: 20px;
+        margin: 1rem;
+        height: calc(100% - 2rem);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .instructions-container h1 {
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #ffc857;
+      }
+
+      .instructions-container h2,
+      .instructions-container h3 {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #ffb627;
+        margin-top: 0.8rem;
+      }
+
+      .instructions-container ul {
+        margin-left: 0;
+        padding-left: 0;
+      }
+
+      .instructions-container li {
+        margin-bottom: 0.6rem;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        color: #f0f0f0;
+      }
+
+      .instructions-container p {
+        color: #ffb627;
+        font-weight: 500;
+      }
+
+      .capture-btn {
+        margin-top: auto;
+        background-color: #ffc857;
+        color: #15224b;
+        border: none;
+        padding: 1rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .capture-btn:hover {
+        background-color: #ffb627;
+        transform: scale(1.02);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid mt-4 fixed-top px-3">
+      <nav class="navbar navbar-expand navbar-light">
+        <div class="container-fluid">
+          <button class="btn btn-link text-dark d-none d-lg-block">
+            <i class="fas fa-cog fa-lg"></i>
+          </button>
+
+          <a class="navbar-brand font-weight-bold" href="#">
+            EM<span class="emoji-text"></span>JIFIER
+          </a>
+
+          <button class="btn btn-link text-dark d-none d-lg-block">
+            <i class="fas fa-user fa-lg"></i>
+          </button>
+        </div>
+      </nav>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="content-area">
+      <div class="row no-gutters camera-emoji-container">
+        <div class="col-md-6 w-100 vh-100 bg-light-gray">
+          <video
+            id="webcam"
+            autoplay
+            playsinline
+            class="w-100 h-100 webcam-video"
+          ></video>
+        </div>
+        <div class="col-md-6 no-guttter w-100 vh-100 bg-dark-red">
+          <div class="instructions-container">
+            <h1>Welcome to our Emotion Detection Website!</h1>
+
+            <h2>Getting Started:</h2>
+            <ul class="list-unstyled">
+              <li>
+                1. Allow webcam access and ensure your face is well-lit and
+                centered
+              </li>
+              <li>
+                2. Click "DETECT" to capture your image and display your emotion
+                (e.g., Happy, Sad)
+              </li>
+              <li>
+                3. Click "Show It's Working" to see how the system uses facial
+                landmarks and SVM model analysis
+              </li>
+            </ul>
+
+            <h3>Best Practices:</h3>
+            <ul class="list-unstyled">
+              <li>• Ensure clear lighting</li>
+              <li>• Keep face unobstructed</li>
+              <li>• Check webcam permissions if issues arise</li>
+              <li>• Adjust lighting if needed</li>
+            </ul>
+
+            <button id="detectBtn" class="capture-btn">
+              <i class="fas fa-camera mr-2"></i>Detect Emotion 🙂
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script nonce="<%= nonce %>">
+    const navbar = document.querySelector(".navbar");
+
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 10) {
+        navbar.classList.add("scrolled");
+      } else {
+        navbar.classList.remove("scrolled");
+      }
+    });
+  </script>
+  <script
+    nonce="<%= nonce %>"
+    src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+    integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+    crossorigin="anonymous"
+  ></script>
+  <script
+    nonce="<%= nonce %>"
+    src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+    crossorigin="anonymous"
+  ></script>
+  <script
+    nonce="<%= nonce %>"
+    src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+    crossorigin="anonymous"
+  ></script>
+  <script nonce="<%= nonce %>">
+    async function initWebcam() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+        const video = document.getElementById("webcam");
+        video.srcObject = stream;
+      } catch (err) {
+        console.error("Error accessing webcam:", err);
+      }
+    }
+
+    function captureImage() {
+      const video = document.getElementById("webcam");
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+
+      // Create a download link
+      const link = document.createElement("a");
+      link.download = "captured-image.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    document
+      .getElementById("detectBtn")
+      .addEventListener("click", captureImage);
+
+    initWebcam();
+  </script>
+</html>
