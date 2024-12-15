@@ -6,6 +6,7 @@ from PIL import Image
 import base64
 import io
 from flask_cors import CORS
+import cv2
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -37,23 +38,23 @@ emotion_to_emoji = {
 
 # Helper function to preprocess image
 def preprocess_image(image_data):
-    # Remove the "data:image/png;base64," prefix if present
-    if ',' in image_data:
-        image_data = image_data.split(',')[1]
-    
-    # Decode base64 string to bytes
-    image_bytes = base64.b64decode(image_data)
-    
-    # Create image from bytes
-    img = Image.open(io.BytesIO(image_bytes)).convert('L')  # Convert to grayscale
-    
-    # Resize image to the required dimensions
-    img = img.resize((66, 66))
-    
-    # Convert to numpy array and flatten
-    img_array = np.array(img).flatten()
-    
-    return img_array
+    try:
+        # Decode base64 string to bytes
+        image_bytes = base64.b64decode(image_data)
+        
+        # Create image from bytes
+        img = Image.open(io.BytesIO(image_bytes)).convert('L')  # Convert to grayscale
+        
+        # Resize image to 66x66 pixels (to match the training data)
+        img = img.resize((66, 66))  # Changed from 96x96 to 66x66
+        
+        # Convert to numpy array and flatten
+        img_array = np.array(img).flatten()
+        
+        return img_array
+    except Exception as e:
+        print("Error in preprocess_image:", str(e))
+        raise
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
@@ -71,10 +72,8 @@ def upload_image():
         image = preprocess_image(image_data)
         image_scaled = scaler.transform([image])
 
-        if pca:
-            image_scaled = pca.transform(image_scaled)
-        if lda:
-            image_scaled = lda.transform(image_scaled)
+        image_scaled = pca.transform(image_scaled)
+        image_scaled = lda.transform(image_scaled)
 
         prediction = svm_model.predict(image_scaled)[0]
         emoji = emotion_to_emoji.get(prediction, "🤔")

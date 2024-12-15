@@ -8,24 +8,25 @@ document.addEventListener("DOMContentLoaded", () => {
  // Send the image to the Flask backend
  async function sendImageToBackend(imageData) {
   try {
-      // console.log(imageData); 
-       console.log(imageData.src);
-      image = imageData.src;
-      image = image.replace("data:image/png;base64,", "");
-      data = JSON.stringify({
-        image: image
-      });
-      console.log(data);
+      // Get base64 string and remove the prefix
+      const base64String = imageData.src.split(',')[1];
+      
       const response = await fetch("http://127.0.0.1:5000/upload", {
-      method: "POST",
-      body: data,
-      headers: { "Content-Type": "application/json" },
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+              image: base64String
+          })
       });
+
       if (!response.ok) {
           throw new Error(`Server responded with status: ${response.status}`);
       }
       const result = await response.json();
       console.log(result);
+      return result;
   } catch (error) {
       console.error("Error during API call:", error.message);
   }
