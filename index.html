@@ -4,8 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Emojiifier</title>
-    <script src="script.js"></script>
-
     <link
       rel="stylesheet"
       href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
@@ -265,6 +263,51 @@
       .bounce {
         animation: bounce 2s infinite;
       }
+
+      #capturedImage {
+        display: none;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-top-left-radius: 30px !important;
+        border-bottom-left-radius: 30px;
+      }
+
+      .technical-section {
+        background-color: #324376;
+        color: white;
+        padding: 4rem 2rem;
+      }
+
+      .technical-section h2 {
+        color: #ffc857;
+        margin-bottom: 2rem;
+      }
+
+      .step-box {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-box h3 {
+        color: #ffb627;
+        margin-bottom: 1rem;
+      }
+
+      .step-box p {
+        color: #f0f0f0;
+        line-height: 1.6;
+      }
+
+      .code-block {
+        background: #1e2a4a;
+        padding: 1rem;
+        border-radius: 5px;
+        margin: 1rem 0;
+        font-family: monospace;
+      }
     </style>
   </head>
   <body>
@@ -297,6 +340,7 @@
             playsinline
             class="w-100 h-100 webcam-video"
           ></video>
+          <img id="capturedImage" alt="Captured Image" />
         </div>
         <div class="col-md-6 no-guttter w-100 vh-100 bg-dark-red">
           <div class="instructions-container">
@@ -337,6 +381,64 @@
             <button id="detectBtn" class="capture-btn">
               <i class="fas fa-smile mr-2"></i>Detect Emotion
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="technical-section" class="technical-section">
+      <div class="container">
+        <h2 class="text-center">How Our SVM Model Works</h2>
+
+        <div class="step-box">
+          <h3>Step 1: Face Detection</h3>
+          <p>
+            Using OpenCV's Haar Cascade classifier, we first detect and isolate
+            the face in the image:
+          </p>
+          <div class="code-block">
+            face_cascade =
+            cv2.CascadeClassifier('haarcascade_frontalface_default.xml')<br />
+            faces = face_cascade.detectMultiScale(gray_image, 1.3, 5)
+          </div>
+        </div>
+
+        <div class="step-box">
+          <h3>Step 2: Facial Landmark Detection</h3>
+          <p>We identify 68 key facial landmarks using dlib's predictor:</p>
+          <div class="code-block">
+            predictor =
+            dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")<br />
+            landmarks = predictor(image, face_rect)
+          </div>
+        </div>
+
+        <div class="step-box">
+          <h3>Step 3: Feature Extraction</h3>
+          <p>
+            Calculate distances and angles between landmarks to create feature
+            vector:
+          </p>
+          <div class="code-block">
+            features = []<br />
+            for i in range(68):<br />
+            &nbsp;&nbsp;for j in range(i+1, 68):<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;distance = euclidean_distance(landmarks[i],
+            landmarks[j])<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;features.append(distance)
+          </div>
+        </div>
+
+        <div class="step-box">
+          <h3>Step 4: SVM Classification</h3>
+          <p>
+            Our trained SVM model classifies the emotion based on the extracted
+            features:
+          </p>
+          <div class="code-block">
+            svm_model = SVC(kernel='rbf', C=1.0)<br />
+            prediction = svm_model.predict([features])<br />
+            emotion = emotions[prediction[0]]
           </div>
         </div>
       </div>
@@ -391,6 +493,12 @@
       canvas.height = video.videoHeight;
       canvas.getContext("2d").drawImage(video, 0, 0);
 
+      // Hide video and show captured image
+      video.style.display = "none";
+      const capturedImage = document.getElementById("capturedImage");
+      capturedImage.src = canvas.toDataURL("image/png");
+      capturedImage.style.display = "block";
+
       // Start emotion detection animation
       const initialContent = document.getElementById("initial-content");
       const calculatingContent = document.getElementById("calculating-content");
@@ -410,12 +518,13 @@
 
         // Show the button again with new text
         detectBtn.innerHTML =
-          '<i class="fas fa-arrow-down mr-2 bounce"></i>Show It\'s Working';
+          '<i class="fas fa-code mr-2"></i>Show How It Works';
         detectBtn.style.opacity = "1";
 
+        // Change button click handler to scroll to technical section
         detectBtn.onclick = () => {
-          window.scrollTo({
-            top: window.innerHeight,
+          // Scroll to technical section
+          document.querySelector("#technical-section").scrollIntoView({
             behavior: "smooth",
           });
         };
