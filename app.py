@@ -3,9 +3,13 @@ from flask import Flask, request, jsonify
 import numpy as np
 import joblib
 from PIL import Image
+import base64
+import io
+from flask_cors import CORS
 
 # Initialize Flask app
 app = Flask(__name__)
+CORS(app)
 
 # Load the trained model and preprocessing tools
 model_path = "model/svm_model.pkl"
@@ -32,63 +36,50 @@ emotion_to_emoji = {
 }
 
 # Helper function to preprocess image
-def preprocess_image(image_path):
-    # Load the image
-    img = Image.open(image_path).convert('L')  # Convert to grayscale
-
-    # Resize image to the required dimensions (e.g., 48x48 for FER datasets)
+def preprocess_image(image_data):
+    # Remove the "data:image/png;base64," prefix if present
+    if ',' in image_data:
+        image_data = image_data.split(',')[1]
+    
+    # Decode base64 string to bytes
+    image_bytes = base64.b64decode(image_data)
+    
+    # Create image from bytes
+    img = Image.open(io.BytesIO(image_bytes)).convert('L')  # Convert to grayscale
+    
+    # Resize image to the required dimensions
     img = img.resize((96, 96))
-
-    # Flatten the image into a single row of pixel values
+    
+    # Convert to numpy array and flatten
     img_array = np.array(img).flatten()
-
+    
     return img_array
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
-    # Check if an image file is part of the request
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image provided'}), 400
-
-    # Save the uploaded image
-    image_file = request.files['image']
-    image_path = os.path.join("temp", image_file.filename)
-    os.makedirs("temp", exist_ok=True)
-    image_file.save(image_path)
-
     try:
-        # Preprocess the image
-        image = preprocess_image(image_path)
+        data = request.data  # Raw request data
+        print("Received raw data:", data)
+        # data_json = request.json  # Try parsing the JSON
+        # print("Decoded JSON:", request.json)
+        image_data = data.get('image')
+        if not image_data:
+            return jsonify({'error': 'No image data provided'}), 400
 
-        # Apply scaler
+        # Preprocess and predict
+        image = preprocess_image(image_data)
         image_scaled = scaler.transform([image])
 
-        # Apply PCA if available
         if pca:
-            image_pca = pca.transform(image_scaled)
-        else:
-            image_pca = image_scaled
-
-        # Apply LDA if available
+            image_scaled = pca.transform(image_scaled)
         if lda:
-            image_lda = lda.transform(image_pca)
-        else:
-            image_lda = image_pca
+            image_scaled = lda.transform(image_scaled)
 
-        # Predict using the SVM model
-        prediction = svm_model.predict(image_lda)[0]
-
-        # Get the emoji for the predicted emotion
+        prediction = svm_model.predict(image_scaled)[0]
         emoji = emotion_to_emoji.get(prediction, "🤔")
 
-        # Remove temporary file
-        os.remove(image_path)
-
-        # Return the prediction and emoji
         return jsonify({'emotion': prediction, 'emoji': emoji})
-
     except Exception as e:
-        # Handle errors
         return jsonify({'error': str(e)}), 500
 
 # Run the Flask app

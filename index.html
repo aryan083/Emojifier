@@ -315,7 +315,7 @@
     <div class="container-fluid mt-4 fixed-top px-3">
       <nav class="navbar navbar-expand navbar-light">
         <div class="container-fluid">
-          <button class="btn btn-link text-dark d-none d-lg-block" onclick="sendImageToBackend()">
+          <button class="btn btn-link text-dark d-none d-lg-block" onclick="captureImage()">
             <i class="fas fa-cog fa-lg"></i>
           </button>
 
@@ -492,14 +492,14 @@
       const canvas = document.createElement("canvas");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0);
+      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
 
       // Hide video and show captured image
       video.style.display = "none";
       const capturedImage = document.getElementById("capturedImage");
       capturedImage.src = canvas.toDataURL("image/png");
       capturedImage.style.display = "block";
-
+      sendImageToBackend(capturedImage);
       // Start emotion detection animation
       const initialContent = document.getElementById("initial-content");
       const calculatingContent = document.getElementById("calculating-content");

@@ -1,26 +1,35 @@
+document.addEventListener("DOMContentLoaded", () => {
+  document
+    .getElementById("detectBtn")
+    .addEventListener("click", onDetectEmotionClick);
+  initWebcam();
+});
 
-  // Send the image to the Flask backend
-  async function sendImageToBackend(imageBlob) {
-    const formData = new FormData();
-    formData.append("image", imageBlob, "capture.jpg");
-  
-    try {
-      const response = await fetch("http://127.0.0.1:5000/upload", {
-        method: "POST",
-        body: formData,
-      });
-  
-      if (!response.ok) {
-        throw new Error("Failed to get a response from the backend");
+ // Send the image to the Flask backend
+ async function sendImageToBackend(imageData) {
+  try {
+      // console.log(imageData); 
+       console.log(imageData.src);
+      image = imageData.src;
+      image = image.replace("data:image/png;base64,", "");
+      data = {
+        image: image
       }
-  
-      return await response.json();
-    } catch (error) {
-      console.error("Error during API call:", error);
-      return { error: "An error occurred. Please try again." };
-    }
+      console.log(data);
+      const response = await fetch("http://127.0.0.1:5000/upload", {
+      method: "POST",
+      body: data,
+      headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+          throw new Error(`Server responded with status: ${response.status}`);
+      }
+      const result = await response.json();
+      console.log(result);
+  } catch (error) {
+      console.error("Error during API call:", error.message);
   }
-  
+}
   // Handle the Detect Emotion button click
   async function onDetectEmotionClick() {
     const initialContent = document.getElementById("initial-content");
