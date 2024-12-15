@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Blender Animation in Fixed Square Div</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        /* Ensure the body has no margins and a centered square div */
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        #animation-container {
+            width: 500px;  /* Fixed square size */
+            height: 500px;
+            background-color: #ffffff; /* Optional background for contrast */
+            border: 2px solid #ccc; /* Optional border */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block; /* Ensure canvas fits the container without scrollbars */
+        }
+    </style>
+</head>
+<body>
+    <div id="animation-container">
+        <canvas id="canvas"></canvas>
+    </div>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector('#canvas'), antialias: true });
+        renderer.setSize(500, 500); // Match the square div size
+
+        // Camera setup for top-down view
+        camera.position.set(0, 50, 0);
+        camera.lookAt(0, 0, 0);
+
+        // Add light
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(10, 10, 10);
+        scene.add(light);
+
+        // Frame rate settings
+        const targetFrameRate = 24; // Match Blender's frame rate
+        const frameTime = 1 / targetFrameRate;
+
+        // Load glTF file
+        const loader = new THREE.GLTFLoader();
+        loader.load('linearanimated.glb', (gltf) => {
+            const model = gltf.scene;
+            scene.add(model);
+
+            // Animation mixer
+            const mixer = new THREE.AnimationMixer(model);
+            gltf.animations.forEach((clip) => mixer.clipAction(clip).play());
+
+            // Animation loop
+            const clock = new THREE.Clock();
+            let accumulatedTime = 0;
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                // Update delta time with frame rate in mind
+                const delta = clock.getDelta();
+                accumulatedTime += delta;
+
+                while (accumulatedTime >= frameTime) {
+                    mixer.update(frameTime);
+                    accumulatedTime -= frameTime;
+                }
+
+                renderer.render(scene, camera);
+            }
+            animate();
+        });
+    </script>
+</body>
+</html>
