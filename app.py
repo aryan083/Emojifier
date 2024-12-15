@@ -1,25 +1,26 @@
 import os
 from flask import Flask, request, jsonify
-import numpy as np
-import tensorflow as tf
-from tensorflow.keras.models import load_model
 from flask_cors import CORS
 import base64
 import io
 from PIL import Image
+import numpy as np
+from transformers import ViTFeatureExtractor, ViTForImageClassification
+import torch
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Load the trained Keras model
-model_path = "model/cnn_emotion_detection.h5"  # Update to the correct model .h5 file path
-emotion_model = load_model(model_path)
+# Load the Hugging Face model and feature extractor
+model_name = "dima806/face_emotions_image_detection"
+feature_extractor = ViTFeatureExtractor.from_pretrained(model_name)
+emotion_model = ViTForImageClassification.from_pretrained(model_name)
 
 # Emotion to emoji mapping
 emotion_to_emoji = {
     "neutral": "\ud83d\ude10",
-    "happy": "\ud83d\ude0a",
+    "happy": "😊",
     "sad": "\ud83d\ude22",
     "surprise": "\ud83d\ude32",
     "fear": "\ud83d\ude28",
@@ -35,19 +36,11 @@ def preprocess_image(image_data):
         image_bytes = base64.b64decode(image_data)
 
         # Create image from bytes
-        img = Image.open(io.BytesIO(image_bytes)).convert('L')  # Convert to grayscale
+        img = Image.open(io.BytesIO(image_bytes)).convert('RGB')  # Convert to RGB
 
-        # Resize image to match the input shape of the model (48x48 for grayscale input)
-        img = img.resize((48, 48))
-
-        # Convert to numpy array and scale pixel values to [0, 1]
-        img_array = np.array(img).astype('float32') / 255.0
-
-        # Add channel and batch dimensions
-        img_array = np.expand_dims(img_array, axis=-1)  # Add channel dimension for grayscale
-        img_array = np.expand_dims(img_array, axis=0)   # Add batch dimension
-
-        return img_array
+        # Resize and preprocess image
+        inputs = feature_extractor(images=img, return_tensors="pt")
+        return inputs
     except Exception as e:
         print("Error in preprocess_image:", str(e))
         raise
@@ -62,14 +55,14 @@ def upload_image():
         image_data = data['image']
 
         # Preprocess image
-        image_preprocessed = preprocess_image(image_data)
+        inputs = preprocess_image(image_data)
 
         # Make prediction
-        predictions = emotion_model.predict(image_preprocessed)
-        predicted_class = np.argmax(predictions, axis=1)[0]
+        outputs = emotion_model(**inputs)
+        predicted_class = torch.argmax(outputs.logits, dim=1).item()
 
         # Map class index to emotion
-        class_names = ["anger", "contempt", "disgust", "fear", "happy", "neutral", "sad", "surprise"]
+        class_names = emotion_model.config.id2label  # Class labels from model config
         emotion = class_names[predicted_class]
         emoji = emotion_to_emoji.get(emotion, "\ud83e\udd14")  # Default to thinking face emoji
 
