@@ -1,32 +1,31 @@
 import os
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import base64
 import io
 from PIL import Image
-import numpy as np
-from transformers import ViTFeatureExtractor, ViTForImageClassification
+from flask_cors import CORS
+from transformers import AutoImageProcessor, AutoModelForImageClassification
 import torch
+import numpy as np
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Load the Hugging Face model and feature extractor
-model_name = "dima806/face_emotions_image_detection"
-feature_extractor = ViTFeatureExtractor.from_pretrained(model_name)
-emotion_model = ViTForImageClassification.from_pretrained(model_name)
+# Load the Hugging Face model and processor
+processor = AutoImageProcessor.from_pretrained("dima806/facial_emotions_image_detection")
+model = AutoModelForImageClassification.from_pretrained("dima806/facial_emotions_image_detection")
 
 # Emotion to emoji mapping
 emotion_to_emoji = {
-    "neutral": "\ud83d\ude10",
+    "neutral": "😐",
     "happy": "😊",
-    "sad": "\ud83d\ude22",
-    "surprise": "\ud83d\ude32",
-    "fear": "\ud83d\ude28",
-    "disgust": "\ud83e\udd2c",
-    "anger": "\ud83d\ude20",
-    "contempt": "\ud83d\ude12"
+    "sad": "😢",
+    "surprise": "😲",
+    "fear": "😨",
+    "disgust": "🤢",
+    "anger": "😠",
+    "contempt": "😒"
 }
 
 # Helper function to preprocess image
@@ -35,12 +34,27 @@ def preprocess_image(image_data):
         # Decode base64 string to bytes
         image_bytes = base64.b64decode(image_data)
 
-        # Create image from bytes
-        img = Image.open(io.BytesIO(image_bytes)).convert('RGB')  # Convert to RGB
+        # Open the image and convert to grayscale
+        img = Image.open(io.BytesIO(image_bytes)).convert('L')  # Convert to grayscale
 
-        # Resize and preprocess image
-        inputs = feature_extractor(images=img, return_tensors="pt")
-        return inputs
+        # Resize image to 96x96
+        img_resized = img.resize((96, 96))
+
+        # Convert the processed grayscale image to base64
+        buffered = io.BytesIO()
+        img_resized.save(buffered, format="PNG")
+        grayscale_image_base64 = base64.b64encode(buffered.getvalue()).decode()
+
+        # Prepare the image for Hugging Face processor (convert back to RGB)
+        img_rgb = img_resized.convert('RGB')
+
+        # Preprocess the RGB image using Hugging Face processor
+        inputs = processor(images=img_rgb, return_tensors="pt")
+
+        return {
+            "grayscale_base64": grayscale_image_base64,
+            "processed_inputs": inputs
+        }
     except Exception as e:
         print("Error in preprocess_image:", str(e))
         raise
@@ -54,19 +68,29 @@ def upload_image():
 
         image_data = data['image']
 
-        # Preprocess image
-        inputs = preprocess_image(image_data)
+        # Preprocess the image and get intermediate steps
+        preprocessing_steps = preprocess_image(image_data)
 
-        # Make prediction
-        outputs = emotion_model(**inputs)
-        predicted_class = torch.argmax(outputs.logits, dim=1).item()
+        # Model evaluation
+        inputs = preprocessing_steps["processed_inputs"]
+        outputs = model(**inputs)
+        predicted_class_idx = torch.argmax(outputs.logits, dim=1).item()
 
         # Map class index to emotion
-        class_names = emotion_model.config.id2label  # Class labels from model config
-        emotion = class_names[predicted_class]
-        emoji = emotion_to_emoji.get(emotion, "\ud83e\udd14")  # Default to thinking face emoji
+        class_names = model.config.id2label  # Class labels from model config
+        emotion = class_names[predicted_class_idx]
+        emoji = emotion_to_emoji.get(emotion, "🤔")  # Default to thinking face emoji
 
-        return jsonify({'emotion': emotion, 'emoji': emoji})
+        # Convert model logits to probabilities (softmax)
+        probabilities = torch.nn.functional.softmax(outputs.logits, dim=1).tolist()[0]
+
+        return jsonify({
+            "emotion": emotion,
+            "emoji": emoji,
+            "grayscale_image": preprocessing_steps["grayscale_base64"],
+            "model_inputs": inputs["pixel_values"].tolist(),  # Intermediate tensor values
+            "model_probabilities": dict(zip(class_names.values(), probabilities))
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
