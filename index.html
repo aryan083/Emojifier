@@ -48,7 +48,7 @@
         position: fixed;
         top: 0;
         left: 0;
-        background-color: #fcd34d6e;
+        background-color: #ffffff6e;
         backdrop-filter: blur(3px);
         -webkit-backdrop-filter: blur(3px);
         border: none !important;
@@ -369,6 +369,63 @@
         left: 0;
         color: #ffc857;
       }
+
+      .final-analysis {
+        background: #324376 !important;
+        border-radius: 30px !important;
+        padding: 40px !important;
+        margin-top: 40px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .analysis-container {
+        padding: 0;
+      }
+
+      .analysis-box {
+        background: rgba(255, 255, 255, 0.05) !important;
+        padding: 30px;
+        border-radius: 30px;
+        height: 100%;
+        border: none !important;
+        margin: 10px;
+        text-align: center;
+      }
+
+      .analysis-box h4 {
+        color: #f0f0f0;
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        font-weight: 300;
+        letter-spacing: 1px;
+      }
+
+      .detected-emoji {
+        font-size: 4.5rem;
+        margin: 15px 0;
+      }
+
+      .highlight-text {
+        color: #ffc857;
+        font-size: 2rem;
+        margin-top: 15px !important;
+        text-transform: capitalize;
+        font-weight: 300;
+      }
+
+      .confidence-text {
+        color: #ffc857;
+        font-size: 2rem;
+        font-weight: 300;
+      }
+
+      .final-analysis h3 {
+        color: #f0f0f0;
+        font-size: 2rem;
+        margin-bottom: 30px;
+        font-weight: 300;
+        letter-spacing: 1px;
+      }
     </style>
   </head>
   <body>
@@ -452,14 +509,11 @@
 
     <div id="technical-section" class="technical-section">
       <div class="container">
-        <h2 class="text-center">Real-Time Model Analysis</h2>
+        <h2 class="text-center mb-4">Real-Time Model Analysis</h2>
 
         <div class="step-box">
-          <h3>Step 1: Image Preprocessing</h3>
-          <p>
-            Your image has been converted to grayscale and normalized for
-            processing:
-          </p>
+          <h3>Step 1: Image Acquisition</h3>
+          <p>Capturing and preparing your image:</p>
           <div id="preprocessed-image"></div>
         </div>
 
@@ -471,27 +525,28 @@
           </div>
         </div>
 
-        <div class="step-box">
-          <h3>Step 3: Primary Emotion</h3>
-          <p>The model's top prediction:</p>
-          <div id="primary-emotion" class="text-center">
-            <span id="detected-emoji" class="detected-emoji"></span>
-            <h4 id="detected-emotion" class="highlight-text"></h4>
-          </div>
-        </div>
-
-        <div class="step-box">
-          <h3>Step 4: Confidence Level</h3>
-          <p>Overall confidence in prediction:</p>
-          <div id="confidence-score" class="text-center">
-            <h4 class="confidence-text"></h4>
-          </div>
-        </div>
-
-        <div class="step-box">
-          <h3>Processing Steps</h3>
-          <div id="processing-steps">
-            <!-- Steps will be inserted here -->
+        <div class="step-box final-analysis">
+          <h3>Final Analysis</h3>
+          <div class="analysis-container">
+            <div class="row align-items-stretch">
+              <div class="col-md-6">
+                <div class="analysis-box">
+                  <h4>Primary Emotion</h4>
+                  <div id="primary-emotion" class="text-center">
+                    <span id="detected-emoji" class="detected-emoji"></span>
+                    <h4 id="detected-emotion" class="highlight-text"></h4>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="analysis-box">
+                  <h4>Confidence Level</h4>
+                  <div id="confidence-score" class="text-center">
+                    <h4 class="confidence-text"></h4>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

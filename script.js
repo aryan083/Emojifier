@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", () => {
     .addEventListener("click", onDetectEmotionClick);
   document.getElementById("settingsBtn").addEventListener("click", onDetectEmotionClick);
   initWebcam();
+  const technicalSection = document.getElementById("technical-section");
+  technicalSection.style.display = "none";
 });
 
  // Send the image to the Flask backend
@@ -48,6 +50,9 @@ document.addEventListener("DOMContentLoaded", () => {
         detectBtn.style.opacity = "0";
         loadingSpinner.style.display = "block";
         
+        // Hide technical section while processing
+        technicalSection.style.display = "none";
+        
         // Capture and process image
         const capturedImage = captureImage();
         const result = await sendImageToBackend(capturedImage);
@@ -59,8 +64,10 @@ document.addEventListener("DOMContentLoaded", () => {
         // Hide loading spinner after getting results
         loadingSpinner.style.display = "none";
 
-        // Show technical section
+        // Show and update technical section
         technicalSection.style.display = "block";
+        void technicalSection.offsetWidth;
+        technicalSection.classList.add('visible');
         
         // Update technical section with processing steps
         updateTechnicalSection(result);
@@ -72,7 +79,10 @@ document.addEventListener("DOMContentLoaded", () => {
         // Update button
         detectBtn.innerHTML = '<i class="fas fa-code mr-2"></i>Show Details';
         detectBtn.style.opacity = "1";
-        detectBtn.onclick = () => technicalSection.scrollIntoView({ behavior: "smooth" });
+        
+        // Remove old click handler and add new one
+        detectBtn.removeEventListener('click', onDetectEmotionClick);
+        detectBtn.addEventListener('click', handleShowDetails);
 
     } catch (error) {
         console.error("Error:", error);
@@ -80,18 +90,32 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelector(".result-emoji").textContent = "❌";
         document.querySelector(".result-comment").textContent = "Failed to detect emotion. Please try again.";
         detectBtn.style.opacity = "1";
+        technicalSection.style.display = "none";
     }
   }
   
   // Initialize when document is loaded
   document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("detectBtn").addEventListener("click", onDetectEmotionClick);
-    document.getElementById("settingsBtn").addEventListener("click", onDetectEmotionClick);
+    const detectBtn = document.getElementById("detectBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
+    const technicalSection = document.getElementById("technical-section");
+
+    // Hide technical section initially
+    technicalSection.style.display = "none";
+
+    // Add click handlers
+    detectBtn.addEventListener("click", onDetectEmotionClick);
+    settingsBtn.addEventListener("click", onDetectEmotionClick);
+    
     initWebcam();
   });
   
   function updateTechnicalSection(result) {
-    // Update preprocessed image
+    console.log("Full result:", result);
+    console.log("Processing steps:", result.processing_steps);
+    console.log("Detailed steps:", result.processing_steps.detailed_steps);
+
+    // Update preprocessed image with processing info
     document.getElementById("preprocessed-image").innerHTML = `
         <img src="${result.grayscale_image}" alt="Preprocessed Image" class="preprocessed-image">
         <div class="processing-info">
@@ -100,13 +124,51 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
     `;
 
-    // Update processing steps
-    const stepsHtml = result.processing_steps.preprocessing
-        .map(step => `<li>${step}</li>`)
-        .join('');
-    document.getElementById("processing-steps").innerHTML = `
-        <ul class="step-list">${stepsHtml}</ul>
-    `;
+    // Update processing pipeline steps
+    const processSteps = result.processing_steps.detailed_steps;
+    if (!processSteps) {
+        console.error("No processing steps found in result");
+        return;
+    }
+
+    let stepsHtml = '<div class="process-flow">';
+    
+    // Add each processing stage with error handling
+    try {
+        for (const [stage, steps] of Object.entries(processSteps)) {
+            console.log("Processing stage:", stage, steps);
+            const stageName = stage.split('_').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+            
+            stepsHtml += `
+                <div class="process-stage">
+                    <h4>${stageName}</h4>
+                    <ul class="step-list">
+                        ${Array.isArray(steps) ? steps.map(step => `<li>${step}</li>`).join('') : ''}
+                    </ul>
+                </div>
+            `;
+        }
+        stepsHtml += '</div>';
+        
+        // Add model information
+        stepsHtml += `
+            <div class="model-info">
+                <h4>MODEL SPECIFICATIONS</h4>
+                <ul class="step-list">
+                    <li>Type: ${result.processing_steps.model_type}</li>
+                    <li>Input Shape: ${result.processing_steps.input_shape}</li>
+                    <li>Output: ${result.processing_steps.output_classes}</li>
+                </ul>
+            </div>
+        `;
+
+        console.log("Generated HTML:", stepsHtml);
+        document.getElementById("processing-steps").innerHTML = stepsHtml;
+    } catch (error) {
+        console.error("Error generating steps HTML:", error);
+    }
 
     // Update emotion probabilities
     const probContainer = document.getElementById("emotion-probabilities");
@@ -131,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("detected-emoji").textContent = result.emoji;
     document.getElementById("detected-emotion").textContent = result.emotion;
     document.getElementById("confidence-score").querySelector("h4").textContent = 
-        `${(result.model_probabilities[result.emotion] * 100).toFixed(1)}% Confident`;
+        `${(result.model_probabilities[result.emotion] * 100).toFixed(1)}%`;
   }
   
   function getEmotionMessage(emotion) {
@@ -145,5 +207,19 @@ document.addEventListener("DOMContentLoaded", () => {
         neutral: "Keeping it cool and collected with that poker face! 😎"
     };
     return messages[emotion] || "Interesting expression you've got there! 🤔";
+  }
+  
+  // Add this new function for handling the "Show Details" click
+  function handleShowDetails() {
+    const technicalSection = document.getElementById("technical-section");
+    // First ensure the section is visible
+    technicalSection.style.display = "block";
+    // Then scroll to it
+    setTimeout(() => {
+        technicalSection.scrollIntoView({ 
+            behavior: "smooth",
+            block: "start"
+        });
+    }, 100);
   }
   
