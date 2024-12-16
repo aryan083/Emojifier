@@ -56,7 +56,7 @@ def upload_image():
         if not data or 'image' not in data:
             return jsonify({'error': 'No image data provided'}), 400
 
-        # Preprocess image
+        # Preprocess image and get steps
         preprocessing_results = preprocess_image(data['image'])
         img = preprocessing_results["image"]
 
@@ -67,16 +67,25 @@ def upload_image():
         emotion = top_prediction['label'].lower()
         emoji = emotion_to_emoji.get(emotion, "\ud83e\udd14")
 
-        # Get probabilities for all emotions
+        # Get probab    ilities for all emotions
         prob_dict = {pred['label'].lower(): float(pred['score']) for pred in predictions}
 
         return jsonify({
             "emotion": emotion,
             "emoji": emoji,
-            "grayscale_image": preprocessing_results["grayscale_base64"],
-            "model_probabilities": prob_dict
+            "grayscale_image": f"data:image/png;base64,{preprocessing_results['grayscale_base64']}",
+            "model_probabilities": prob_dict,
+            "processing_steps": {
+                "original_size": img.size,
+                "color_mode": img.mode,
+                "preprocessing": [
+                    "RGB Conversion",
+                    "Grayscale Transformation",
+                    "Normalization"
+                ]
+            }
         })
-    except Exception as e:
+    except Exception as e:  
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
