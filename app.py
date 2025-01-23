@@ -49,6 +49,10 @@ def preprocess_image(image_data):
         print("Error in preprocess_image:", str(e))
         raise
 
+@app.route('/', methods=['GET'])  # Fixed keyword 'methods'
+def index():
+    return app.send_static_file('index.html')
+
 @app.route('/upload', methods=['POST'])
 def upload_image():
     try:
@@ -67,7 +71,7 @@ def upload_image():
         emotion = top_prediction['label'].lower()
         emoji = emotion_to_emoji.get(emotion, "\ud83e\udd14")
 
-        # Get probab    ilities for all emotions
+        # Get probabilities for all emotions
         prob_dict = {pred['label'].lower(): float(pred['score']) for pred in predictions}
 
         return jsonify({
@@ -85,7 +89,7 @@ def upload_image():
                 ]
             }
         })
-    except Exception as e:  
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':

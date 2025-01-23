@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Get base64 string and remove the prefix
       const base64String = imageData.src.split(',')[1];
       
-      const response = await fetch("http://127.0.0.1:5000/upload", {
+      const response = await fetch("/upload", { // Changed to relative path
           method: "POST",
           headers: {
               "Content-Type": "application/json",
@@ -146,4 +146,3 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     return messages[emotion] || "Interesting expression you've got there! 🤔";
   }
-  
