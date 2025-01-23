@@ -74,7 +74,38 @@ def upload_image():
         # Get probabilities for all emotions
         prob_dict = {pred['label'].lower(): float(pred['score']) for pred in predictions}
 
-        return jsonify({
+        # Detailed process steps
+        process_steps = {
+            "image_acquisition": [
+                "Webcam capture using getUserMedia API",
+                "Canvas API used for image capture",
+                "Base64 encoding for data transfer",
+                "CORS-enabled secure transmission"
+            ],
+            "preprocessing": [
+                "Base64 decoding to binary data",
+                "PIL Image processing pipeline",
+                "RGB format conversion",
+                "Grayscale conversion for visualization",
+                "Image resizing and normalization"
+            ],
+            "model_pipeline": [
+                "Hugging Face Transformers pipeline",
+                "ViT-based image classification",
+                "Multi-head self-attention mechanism",
+                "Feature extraction from image patches",
+                "Emotion classification head"
+            ],
+            "classification": [
+                "7-class emotion detection",
+                "Softmax probability distribution",
+                "Confidence score calculation",
+                "Emoji mapping for visualization",
+                "Real-time result generation"
+            ]
+        }
+
+        response_data = {
             "emotion": emotion,
             "emoji": emoji,
             "grayscale_image": f"data:image/png;base64,{preprocessing_results['grayscale_base64']}",
@@ -82,14 +113,18 @@ def upload_image():
             "processing_steps": {
                 "original_size": img.size,
                 "color_mode": img.mode,
-                "preprocessing": [
-                    "RGB Conversion",
-                    "Grayscale Transformation",
-                    "Normalization"
-                ]
+                "detailed_steps": process_steps,
+                "model_type": "Vision Transformer (ViT)",
+                "input_shape": "224x224x3",
+                "output_classes": "7 emotions (angry, disgust, fear, happy, sad, surprise, neutral)"
             }
-        })
-    except Exception as e:
+        }
+        
+        print("Response data:", response_data)  # Debug print
+        return jsonify(response_data)
+
+    except Exception as e:  
+        print(f"Error processing image: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
